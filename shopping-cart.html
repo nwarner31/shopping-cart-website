@@ -3,15 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <title>Shopping Cart</title>
+    <link rel="stylesheet" href="shopping-cart.css"></link>
 </head>
 <body>
     <div class="contents">
-        <div class="product-container"></div>
+        <div class="product-bar">
+            <div id="prev-button" class="card-nav disabled left-button">prev</div>
+            <div id="product-container" class="product-container"></div>
+            <div id="next-button" isDisabled="false" class="card-nav right-button">next</div>
+        </div>
+
         <div class="cart">
             <h4>Your Cart</h4>
             <div id="cart-contents"></div>
-
+            <div id="cart-total">$0</div>
         </div>
     </div>
 </body>
+<script src="shopping-cart.js"></script>
 </html>

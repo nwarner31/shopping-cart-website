@@ -26,7 +26,7 @@ const products = {
 
 }
 
-let cart = [];
+let cart = {};
 
 function createProductDisplay(product) {
     const container = document.createElement("div");
@@ -50,7 +50,7 @@ function createProductDisplay(product) {
         cartButton.disabled = true;
         cartButton.classList.add("disabled");
         const cartItem = {"product": product, "quantity": 1, "lineTotal": product.price}
-        cart.push(cartItem);
+        cart[product.id] = cartItem;
         createCartLine(cartItem);
     })
     container.appendChild(cartButton);
@@ -78,14 +78,11 @@ else {
 function displayProducts(index) {
     const displays = document.getElementsByClassName("product-card");
 
-    console.log(displays);
     for (let i = 0; i < displays.length; i++) {
         if (i >= index && i < productViewSize + index ) {
-            console.log(i);
             displays[i].classList.remove("hide");
             displays[i].classList.add("show");
         } else {
-            console.log(i);
             displays[i].classList.remove("show");
             displays[i].classList.add("hide");
         }
@@ -138,49 +135,66 @@ nextButton.addEventListener("click", (e) => {
 
 displayProducts(0);
 
+
+document.addEventListener("click", (e) => {
+    if (e.target.id.includes("plus-button")) {
+        const id = e.target.value;
+        const lineItem = cart[id];
+        lineItem.quantity++;
+        const quantity = document.getElementById(`quantity-${id}`);
+        quantity.innerText = `x${lineItem.quantity}`;
+        lineItem.lineTotal = lineItem.product.price * lineItem.quantity;
+        const lineTotal = document.getElementById(`line-total-${id}`);
+        lineTotal.innerText = `$${lineItem.lineTotal}`;
+        displayTotal();
+    } else if (e.target.id.includes("minus-button")) {
+        const id = e.target.value;
+        const lineItem = cart[id];
+        if (lineItem.quantity === 1) {
+            const cartLine = document.getElementById(`cart-line-${id}`);
+            cartLine.remove();
+            delete cart[id];
+            const cartButton = document.getElementById(`cart-button-${id}`);
+            cartButton.disabled = false;
+            cartButton.innerText = "Add to Cart";
+            cartButton.classList.remove("disabled");
+        } else {
+            const quantity = document.getElementById(`quantity-${id}`);
+            lineItem.quantity--;
+            quantity.innerText = `x${lineItem.quantity}`;
+            lineItem.lineTotal = lineItem.quantity * lineItem.product.price;
+            const lineTotal = document.getElementById(`line-total-${id}`);
+            lineTotal.innerText = `$${lineItem.lineTotal}`;
+        }
+        displayTotal();
+    }
+
+})
+
 function createCartLine(lineItem) {
     const cartLine = document.createElement("div");
+    cartLine.id =`cart-line-${lineItem.product.id}`;
     cartLine.classList.add("cart-line")
     const productName = document.createElement("div");
     productName.classList.add("float-left", "cart-info");
     productName.innerText = lineItem.product.name;
     cartLine.appendChild(productName);
     const plusButton = document.createElement("button");
+    plusButton.id = `plus-button-${lineItem.product.id}`;
+    plusButton.value = lineItem.product.id;
     plusButton.classList.add("float-right", "cart-button");
     plusButton.innerText = "+";
+
     const lineTotal = document.createElement("div");
+    lineTotal.id = `line-total-${lineItem.product.id}`;
     const quantity = document.createElement("div");
-    plusButton.addEventListener("click", (e) => {
-        e.preventDefault();
-        lineItem.quantity++;
-        quantity.innerText = `x${lineItem.quantity}`;
-        lineItem.lineTotal = lineItem.product.price * lineItem.quantity;
-        lineTotal.innerText = `$${lineItem.lineTotal}`;
-        console.log(cart);
-        displayTotal();
-    });
+    quantity.id =  `quantity-${lineItem.product.id}`;
     cartLine.appendChild(plusButton);
     const minusButton = document.createElement("button");
+    minusButton.id = `minus-button-${lineItem.product.id}`;
+    minusButton.value = lineItem.product.id;
     minusButton.classList.add("float-right", "cart-button");
     minusButton.innerText = "-";
-    minusButton.addEventListener("click", (e) => {
-        e.preventDefault();
-        if (lineItem.quantity === 1) {
-            cartLine.remove();
-            let index = cart.indexOf(lineItem);
-            cart.splice(index, 1);
-            const cartButton = document.getElementById(`cart-button-${lineItem.product.id}`);
-            cartButton.disabled = false;
-            cartButton.innerText = "Add to Cart";
-            cartButton.classList.remove("disabled");
-        } else {
-            lineItem.quantity--;
-            quantity.innerText = `x${lineItem.quantity}`;
-            lineItem.lineTotal = lineItem.quantity * lineItem.product.price;
-            lineTotal.innerText = `$${lineItem.lineTotal}`;
-        }
-        displayTotal();
-    });
     cartLine.appendChild(minusButton);
     lineTotal.classList.add("float-right", "cart-line-total", "cart-info");
     lineTotal.innerText = `$${lineItem.lineTotal}`;
@@ -194,7 +208,9 @@ function createCartLine(lineItem) {
 }
 
 function displayTotal() {
-    let total = cart.reduce((sum, item) => {
+    const productsInCart = Object.values(cart);
+
+    let total = productsInCart.reduce((sum, item) => {
         return sum + item.lineTotal;
     }, 0);
     const cartTotal = document.getElementById("cart-total");
